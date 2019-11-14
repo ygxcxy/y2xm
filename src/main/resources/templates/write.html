@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="" th:href="@{/lib/editormd/css/editormd.css}">
+    <link rel="stylesheet" href="" th:href="@{/lib/layui/css/layui.css}">
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        /*暂时处理编辑器高估*/
+        #test-editor {
+            min-height: 750px;
+        }
+    </style>
+</head>
+<body>
+<!--添加编辑容器-->
+<form action="" class="layui-form" lay-filter="form">
+    <div class="layui-form-item">
+        <div class="layui-input-inline">
+            <select name="interest"  th:name="categoryId">
+                <option value="" th:each="obj:${cate}" th:value="${obj.id}" th:text="${obj.name}"></option>
+            </select>
+        </div>
+        <div class="layui-input-inline" style="width: 70%;margin-left:2%">
+            <input type="text" lay-filter="title" name="title" style="background-color:rgb(255, 250, 227)"
+                   class="layui-input" placeholder="请输入标题，100个字以内">
+        </div>
+        <div class="layui-input-inline">
+            <input type="button" class="layui-btn" value="发布" id="publish">
+        </div>
+    </div>
+    <div id="test-editor" class="layui-form-item" style="height: 100%">
+        <div class="layui-input-block ">
+            <textarea style="display:none;" class="layui-textarea" name="content"></textarea>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">标签</label>
+        <div class="layui-input-inline">
+            <input type="text" name="title" lay-verify="tags"
+                   autocomplete="off" placeholder="请输入标签，比如hello" class="layui-input" id="tagBtn">
+        </div>
+    </div>
+    <div class="layui-form-item" id="tagSpans">
+
+    </div>
+</form>
+<!--引入layui-->
+<script th:src="@{/lib/layui/layui.js}"></script>
+<script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+<script type="text/javascript" th:src="@{/lib/editormd/editormd.min.js}"></script>
+<script>
+    var editor;
+    //获取editormd中的数据
+    $(function () {
+        editor = editormd("test-editor", {
+            // width  : "100%",
+            height: "80%",
+            path: "/lib/editormd/lib/"
+        });
+    });
+    layui.use(['jquery', 'form','layer'], function () {
+        var $ = layui.jquery;
+        var form = layui.form;
+        var layer = layui.layer;
+
+        $("#publish").click(function () {
+            //获取源码
+            var label=[];
+            $("#tagSpans input").each(function () {
+                var obj={
+                    name:$(this).val()
+                };
+                label.push(obj);
+            });
+            var category = {
+                id:$("select[name='categoryId']").val()
+
+            };
+           var obj={
+               content:editor.getMarkdown(),
+               title:$("input[name='title']").val(),
+               category:category,
+               labels:label
+           };
+           $.ajax({
+               url:"/article",
+               type:"post",
+               contentType:"application/json",
+               data:JSON.stringify(obj),
+               success:function (data) {
+                   if(data.code==2000){
+
+                   }else {
+                       layer.msg(data.msg)
+                   }
+               }
+           })
+        })
+        //监听键盘事件
+        $("#tagBtn").get(0).addEventListener('keydown',function (ev) {
+            //相当于回车
+            if(ev.keyCode==13){
+                //最新的标签
+                var v = $(this).val();
+                if(v==''){
+                    return;
+                }
+                var bool = false;
+                //循环出所有的标签
+                $("#tagSpans input").each(function () {
+                    var b = $(this).val();
+                    if(v == b){
+                        bool = true;
+                        return;
+                    }
+                });
+                if(bool){
+                    $(this).val("");
+                    return;
+                }
+               var html = "<input class='layui-btn' type='button' value='"+v+"'/>";
+                $(this).val('');
+                $("#tagSpans").append(html);
+                form.render()
+            }
+        })
+    })
+</script>
+</body>
+</html>
