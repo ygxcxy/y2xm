@@ -9,9 +9,15 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
-#  jpa:
-#    platform: org.hibernate.dialect.MySQL8Dialect
-#    hibernate:
-#      ddl-auto: update
+    #文件上传配置
+  servlet:
+    multipart:
+      max-request-size: 10485760
+#  data:
+#    mongodb:
+#      #      指定连接地址，mongodb协议://IP地址:端口/数据库名称 ，默认db，IP地址不要手写。
+#      #      mongodb有一个配置文件，限定了只允许本机访问，我们可以将其修改一下 vim /etc/mongod.conf
+#      #      有一行IP 修改为 0.0.0.0 允许所有的意思，生产环境不要这么写
+#      uri: mongodb://192.168.139.133:27017/db
 server:
   port: 80

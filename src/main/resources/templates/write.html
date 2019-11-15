@@ -60,14 +60,68 @@
         editor = editormd("test-editor", {
             // width  : "100%",
             height: "80%",
-            path: "/lib/editormd/lib/"
+            path: "/lib/editormd/lib/",
+            watch:false    //关闭实时预览
+
         });
     });
     layui.use(['jquery', 'form','layer'], function () {
         var $ = layui.jquery;
         var form = layui.form;
         var layer = layui.layer;
+        //监听ctrl+v,
+        $("#test-editor").get(0).addEventListener("paste",function () {
+            //获取图片资源，使用ajax传
+            //得到编辑器中剪切板的数据
+            var items = event.clipboardData&&event.clipboardData.items;
+            var file = null;
+            //获取剪切板数据
+            if(items&&items.length){
+                //检索剪切板items
+                for(var i = 0;i<items.length;i++){
+                    //如果复制的不是图片就不会遍历为文件
+                    if(items[i].type.indexOf('image')!=-1){
+                        //将剪切板数据，循环遍历为文件对象
+                        file = items[i].getAsFile();
+                    }
+                }
+                if(file==null){
+                    return;
+                }
+                var formData = new FormData();
+                //添加文件参数
+                formData.append('file',file);
+                //使用ajax将文件传入到controller
+                $.ajax({
+                    url:"/article/pic",
+                    type:"post",
+                    data:formData,
+                    contentType:false, //内容类型
+                    processData:false,//数据处理
+                    //设置一个在ajax类型开始之后的效果
+                    beforeSend:function () {
+                        layer.msg(
+                            '<i class="layui-icon layui-icon-upload"></i> 正在上传.....',{
+                                time:1500
+                            });
+                    },
+                    success:function (data) {
+                        //因为data是字符串，需要解析成JSON对象
+                        var obj = JSON.parse(data);
+                        //通过obj.data.url可以得到url地址address为拼接的 图片地址写法
+                        var url  =obj.data.url;
+                        if(url.toString().indexOf(".jps")>0||url.toString().indexOf(".png")>0){
+                            //得到编辑器图片的地址格式
+                            var address = '![]('+url+')';
+                            editor.insertValue(address);
+                        }else {
+                            alert("不符合图片规则")
+                        }
+                    }
 
+                })
+            }
+        })
         $("#publish").click(function () {
             //获取源码
             var label=[];
@@ -128,7 +182,9 @@
                 $("#tagSpans").append(html);
                 form.render()
             }
-        })
+        });
+
+
     })
 </script>
 </body>
